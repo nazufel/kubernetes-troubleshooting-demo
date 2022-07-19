@@ -1,0 +1,38 @@
+# kustomize.yaml
+
+# kustomize file for this overlay
+
+# --------------------------------------------------------------------------- #
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# define the location of bases
+bases:
+  - "../../bases"
+
+# apply labels to every resource
+commonLabels:
+  app: "demo"
+  env: "scenario-3"
+
+# define image for this overlay
+images:
+  - name: "k8s-demo"
+    newTag: "v0"
+
+# define any metadata for this overlay
+metadata:
+  name: "demo"
+
+# define the namespace for this overlay
+namespace: "scenario-3"
+
+# apply specific patches for the specific scenario
+patchesJson6902:
+  - target:
+      version: "v1"
+      kind: "Service"
+      name: "demo"
+    path: "servicePort.yaml"
+#EOF

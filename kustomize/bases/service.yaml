@@ -1,0 +1,21 @@
+# service.yaml
+
+# service resource base
+
+# --------------------------------------------------------------------------- #
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "demo"
+  labels:
+    name: "demo"
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 9999
+  selector:
+    name: "demo"
+  type: "ClusterIP"
+
+#EOF

@@ -1,0 +1,17 @@
+# config.yaml
+
+# create a configmap resource
+
+# --------------------------------------------------------------------------- #
+
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  labels:
+    app: demo
+    env: scenario-0
+  name: common
+  namespace: scenario-0
+data:
+  DEMO_YEAR: "2022"
+#EOF

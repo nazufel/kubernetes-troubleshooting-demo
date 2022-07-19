@@ -1,0 +1,11 @@
+# namesapce.yaml
+
+# create a namespace for this overlay
+
+# --------------------------------------------------------------------------- #
+
+apiVersion: "v1"
+kind: "Namespace"
+metadata:
+  name: "scenario-0"
+#EOF

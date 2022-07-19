@@ -1,0 +1,18 @@
+# pdb.yaml
+
+# pod disruption budget base
+
+# --------------------------------------------------------------------------- #
+
+apiVersion: policy/v1
+kind: "PodDisruptionBudget"
+metadata:
+  name: "demo"
+  labels:
+    name: "demo"
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      name: "demo"
+#EOF

@@ -1,0 +1,18 @@
+# kustomize.yaml
+
+# kustomize file for the bases
+
+# --------------------------------------------------------------------------- #
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# define what resources are part of base
+resources:
+  - "./configmap.yaml"
+  - "./deployment.yaml"
+  - "./hpa.yaml"
+  - "./namespace.yaml"
+  - "./pdb.yaml"
+  - "./service.yaml"
+#EOF

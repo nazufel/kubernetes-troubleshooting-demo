@@ -1,0 +1,50 @@
+# deployment.yaml
+
+# base deployment spec for the app
+
+# --------------------------------------------------------------------------- #
+
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "demo"
+  labels:
+    name: "demo"
+spec:
+  selector:
+    matchLabels:
+      name: "demo"
+  template:
+    metadata:
+      labels:
+        name: "demo"
+    spec:
+      containers:
+        - env:
+          envFrom:
+            - configMapRef:
+                name: "common"
+                optional: false
+          image: "k8s-demo"
+          imagePullPolicy: "IfNotPresent"
+          livenessProbe:
+            failureThreshold: 1
+            httpGet:
+              path: /healthcheck
+              port: 9999
+              scheme: HTTP
+            initialDelaySeconds: 1
+            periodSeconds: 1
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: "demo"
+          ports:
+            - containerPort: 9999
+              protocol: TCP
+          resources:
+            requests:
+              memory: "10Mi"
+              cpu: "0.25"
+            limits:
+              memory: "20Mi"
+              cpu: "0.5"
