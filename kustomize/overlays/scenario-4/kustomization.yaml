@@ -19,7 +19,7 @@ commonLabels:
 # define image for this overlay
 images:
   - name: "k8s-demo"
-    newTag: "v0"
+    newTag: "foo"
 
 # define any metadata for this overlay
 metadata:
