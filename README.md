@@ -622,3 +622,113 @@ poddisruptionbudget.policy/demo created
 horizontalpodautoscaler.autoscaling/demo created
 
 ```
+
+Switch to the `scenario-5` namespace, `kn scenario-5`, and list the resources.
+
+```sh
+kubectl get all
+NAME                        READY   STATUS    RESTARTS   AGE
+pod/demo-6d66b9c655-6h6z2   0/1     Pending   0          62s
+pod/demo-6d66b9c655-lc8dg   0/1     Pending   0          62s
+pod/demo-6d66b9c655-pgpmb   0/1     Pending   0          78s
+
+NAME           TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/demo   ClusterIP   10.96.211.195   <none>        8080/TCP   78s
+
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/demo   0/3     3            0           78s
+
+NAME                              DESIRED   CURRENT   READY   AGE
+replicaset.apps/demo-6d66b9c655   3         3         0       78s
+
+NAME                                       REFERENCE         TARGETS                        MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/demo   Deployment/demo   <unknown>/80%, <unknown>/80%   3         4         3          78s
+```
+The Pods are in a `Pending` state. Let's describe them to see what's going on.
+
+```sh
+kubectl describe pod/demo-6d66b9c655-6h6z2
+Name:           demo-6d66b9c655-6h6z2
+Namespace:      scenario-5
+
+Containers:
+  demo:
+    Image:      k8s-demo:v0
+    Port:       9999/TCP
+    Host Port:  0/TCP
+    Limits:
+      cpu:     200
+      memory:  200Gi
+    Requests:
+      cpu:     100
+      memory:  100Gi
+# ...
+Events:
+  Type     Reason            Age                 From               Message
+  ----     ------            ----                ----               -------
+  Warning  FailedScheduling  39s (x3 over 117s)  default-scheduler  0/1 nodes are available: 1 Insufficient cpu, 1 Insufficient memory
+```
+
+The `Events` say there isn't a node in the cluster with the available resources to run the pods. Looking up higher at the `Limits` and `Requests`, we can see the Deployment spec requires the Pods to have access and be limited on very high resources. There isn't a node in the clust fulfills this requirement. However, we know this is a mistake the Pods don't need that many resources. Let's modify the yaml to reduce these `Limits` and `Requests` to match what the Pods actually need and so that they can be scheduled onto a node.
+
+```sh
+kubectl apply -k kustomize/overlays/scenario-5
+namespace/scenario-5 unchanged
+configmap/common unchanged
+service/demo unchanged
+deployment.apps/demo configured
+poddisruptionbudget.policy/demo configured
+horizontalpodautoscaler.autoscaling/demo configured
+
+kubectl get pods
+NAME                    READY   STATUS    RESTARTS   AGE
+demo-678f5946c6-66rsd   1/1     Running   0          9s
+demo-678f5946c6-trzc6   1/1     Running   0          8s
+demo-678f5946c6-xfq7x   1/1     Running   0          11s
+
+kubectl describe deploy/demo
+Name:                   demo
+Namespace:              scenario-5
+# ...
+Pod Template:
+  Labels:  app=demo
+           env=scenario-5
+           name=demo
+  Containers:
+   demo:
+    Image:      k8s-demo:v0
+    Port:       9999/TCP
+    Host Port:  0/TCP
+    Limits:
+      cpu:     500m
+      memory:  20Mi
+    Requests:
+      cpu:     250m
+      memory:  10Mi
+# ...
+```
+
+Now the Pods are running and have the proper amount of resources they require, which will also allow them to be scheduled onto a node.
+
+Let's check the app.
+
+```sh
+kubectl exec -ti deployment/demo -- curl demo:8080
+{"message":"hello K8s toubleshooting demo","year":"2022"}
+```
+
+Everything looks good. This concludes the final scenario.
+
+## Clean Up
+
+There's a `make` target that will delete the Kind cluster and all of the resources created by this demo. If you are using Kind for something else, then don't run this command. Otherwise run:
+
+```sh
+make down
+kind delete cluster
+Deleting cluster "kind" ...
+```
+
+## Contact
+
+Thank you for taking the time to go through this demo. If you have any questions, concerns, or would like to talk Kubernetes, you can reach me by the contact information on the `README` for my profile. Cheers.
