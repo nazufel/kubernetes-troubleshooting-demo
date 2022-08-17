@@ -1,10 +1,10 @@
 # Kubernetes Troubleshooting Demo
 
-This repository holds several different troubleshooting scenarios for Kubernetes.
+This repository holds several different troubleshooting scenarios for Kubernetes. This is code that was part of a Lunch Learn given internally to Martin DSP develoers. Code is not for production use and comes as is without support of any kind.
 
 ## Limitations
 
-This demo will be using KinD (see below) as the Kubernets runtime and control plane. Kubernetes running anywhere should suffice for these scenarios. The rest of this demo will assume KinD is being used. If not, then you will have to make the appropiate translations, which should be few.
+This demo will be using KinD (see below) as the Kubernetes runtime and control plane. Kubernetes running anywhere should suffice for these scenarios. The rest of this demo will assume KinD is being used. If not, then you will have to make the appropiate translations, which should be few.
 
 However, I have not at the time of this writing, gotten any sort of Ingress or LoadBalancer so that traffic outside of the cluster can get in to use the demo app. I tried using [metallb](https://kind.sigs.k8s.io/docs/user/loadbalancer/) since I have use it successfully before with Kind. I have been at a lost as to why it doesn't work. The only thing I can think of is that I have developed this demo series within [WSL2](https://docs.microsoft.com/en-us/windows/wsl/install). Maybe there's something squirrely going on with that. Perhaps with more time I could work it out. The last time I used metallb, I was using [Fedora](https://getfedora.org/) Linux. I spent too much time trying to get this to work and it's not critical to the demo. I have a way around this as you'll see in the scenarios. Hitting the app's ReST endpoints shouldn't be a blocker for troubleshooting these scenarios. The focus is Kubernetes, not a [Go](https://go.dev/) server.
 ## Prerequisites
