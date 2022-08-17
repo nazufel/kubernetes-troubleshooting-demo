@@ -402,4 +402,119 @@ The application works as well as it is logging each health check endpoint hit. T
 
 This concludes the scenario.
 
-# Scenario 3
+## Scenario 3
+
+Deploy the scenario.
+
+```sh
+kubectl apply -k kustomize/overlays/scenario-3
+namespace/scenario-3 created
+configmap/common created
+service/demo created
+deployment.apps/demo created
+poddisruptionbudget.policy/demo created
+horizontalpodautoscaler.autoscaling/demo created
+```
+
+Change to the `scenario-3` namespace and get all resources.
+
+```sh
+kn scenario-3
+Context "kind-kind" modified.
+Active namespace is "scenario-3".
+
+kubectl get all
+NAME                        READY   STATUS    RESTARTS   AGE
+pod/demo-76956b6dcd-5vxj9   1/1     Running   0          34s
+pod/demo-76956b6dcd-ktcbx   1/1     Running   0          34s
+pod/demo-76956b6dcd-s7dtd   1/1     Running   0          49s
+
+NAME           TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/demo   ClusterIP   10.96.225.254   <none>        8080/TCP   49s
+
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/demo   3/3     3            3           49s
+
+NAME                              DESIRED   CURRENT   READY   AGE
+replicaset.apps/demo-76956b6dcd   3         3         3       49s
+
+NAME                                       REFERENCE         TARGETS                        MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/demo   Deployment/demo   <unknown>/80%, <unknown>/80%   3         4         3          49s
+
+```
+
+Everything looks good. Let's check the application.
+
+```sh
+kubectl exec -ti deployment/demo -- curl demo:8080
+curl: (7) Failed to connect to demo port 8080 after 1 ms: Connection refused
+command terminated with exit code 7
+```
+
+Looks like there's an issue with networking. The above output shows there's a service named `demo`. Let's look there.
+
+```sh
+kubectl describe service demo
+Name:              demo
+Namespace:         scenario-3
+Labels:            app=demo
+                   env=scenario-3
+                   name=demo
+Annotations:       <none>
+Selector:          app=demo,env=scenario-3,name=demo
+Type:              ClusterIP
+IP Family Policy:  SingleStack
+IP Families:       IPv4
+IP:                10.96.225.254
+IPs:               10.96.225.254
+Port:              <unset>  8080/TCP
+TargetPort:        9998/TCP
+Endpoints:         10.244.0.17:9998,10.244.0.18:9998,10.244.0.19:9998
+Session Affinity:  None
+Events:            <none>
+```
+
+The service has the correct `Selector`s as well as showing three endpoints in the `Endpoints` list. It's listening on the proper port of `8080`. However, that `Endpoints` list shows the traffic is being sent to the pods on port `9998`. Let's check the deployment to see which port is exposed for the Pods and to see if this is correct.
+
+```sh
+ kubectl describe deploy/demo
+Name:                   demo
+# ...
+Pod Template:
+  Labels:  app=demo
+           env=scenario-3
+           name=demo
+  Containers:
+   demo:
+    Image:      k8s-demo:v0
+    Port:       9999/TCP
+    Host Port:  0/TCP
+#...
+```
+
+The Deployment output shows us what we need. The Pods are listening on port `9999`, while the service is forwarding traffic on port `9998`. Let's update the Service overlay to use the proper port and redeploy.
+
+```sh
+kubectl apply -k kustomize/overlays/scenario-3
+namespace/scenario-3 unchanged
+configmap/common unchanged
+service/demo configured
+deployment.apps/demo configured
+poddisruptionbudget.policy/demo configured
+horizontalpodautoscaler.autoscaling/demo configured
+
+kubectl exec -ti deployment/demo -- curl demo:8080
+{"message":"hello K8s toubleshooting demo","year":"2022"}
+```
+
+Success. How the LoadBalancer Service is forwarding to the same port that the Pods are listening on.
+
+This concludes the scenario.
+
+## Scenario 4
+
+Deploy the scenario.
+
+```sh
+
+``
