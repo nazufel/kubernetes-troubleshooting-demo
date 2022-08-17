@@ -516,5 +516,109 @@ This concludes the scenario.
 Deploy the scenario.
 
 ```sh
+kubectl apply -k kustomize/overlays/scenario-4
+namespace/scenario-4 created
+configmap/common created
+service/demo created
+deployment.apps/demo created
+poddisruptionbudget.policy/demo created
+horizontalpodautoscaler.autoscaling/demo created
+```
 
-``
+Switch to the `scenario-4` namespace, `kn scenario-4` and list otu the resources.
+
+```sh
+k get all
+NAME                        READY   STATUS             RESTARTS   AGE
+pod/demo-5bd9765c67-9qjtt   0/1     ErrImagePull       0          37s
+pod/demo-5bd9765c67-s8pfx   0/1     ImagePullBackOff   0          22s
+pod/demo-5bd9765c67-sd8zl   0/1     ImagePullBackOff   0          22s
+
+NAME           TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)    AGE
+service/demo   ClusterIP   10.96.35.32   <none>        8080/TCP   37s
+
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/demo   0/3     3            0           37s
+
+NAME                              DESIRED   CURRENT   READY   AGE
+replicaset.apps/demo-5bd9765c67   3         3         0       37s
+
+NAME                                       REFERENCE         TARGETS                        MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/demo   Deployment/demo   <unknown>/80%, <unknown>/80%   3         4         3          37s
+
+```
+
+Looks like the Pods are unable to pull the specified Docker Image. Let's see what Image they are trying to pull.
+
+```sh
+kubectl describe deploy/demo
+Name:                   demo
+Namespace:              scenario-4
+# ...
+Pod Template:
+  Labels:  app=demo
+           env=scenario-4
+           name=demo
+  Containers:
+   demo:
+    Image:      k8s-demo:foo
+    Port:       9999/TCP
+    Host Port:  0/TCP
+#...
+```
+
+Describing the Deployment shows the Image tag is set to `foo`. Here is where we'd check our registry to see if that tag exists, which it doesn't. Howver, tag `v0` does since we built that image with the `make` command at the beginning. Now let's update Kustomize to use the correct Image tag and redeploy.
+
+```sh
+kubectl apply -k kustomize/overlays/scenario-4
+namespace/scenario-4 unchanged
+configmap/common unchanged
+service/demo unchanged
+deployment.apps/demo configured
+poddisruptionbudget.policy/demo configured
+horizontalpodautoscaler.autoscaling/demo configured
+
+kubectl get pods
+NAME                    READY   STATUS    RESTARTS   AGE
+demo-67bf5db5f9-h2d98   1/1     Running   0          13s
+demo-67bf5db5f9-m29hg   1/1     Running   0          12s
+demo-67bf5db5f9-mf77s   1/1     Running   0          15s
+
+kubectl describe deploy/demo
+Name:                   demo
+# ...
+Pod Template:
+  Labels:  app=demo
+           env=scenario-4
+           name=demo
+  Containers:
+   demo:
+    Image:      k8s-demo:v0
+    Port:       9999/TCP
+    Host Port:  0/TCP
+# ...
+```
+
+After applying the updated yaml we can see the pods are now in a `Running` state as well as the Deployment is using the proper `v0` tag. Let's check the app.
+
+```sh
+kubectl exec -ti deployment/demo -- curl demo:8080
+{"message":"hello K8s toubleshooting demo","year":"2022"}
+```
+
+Everything works. This concludes the scenario.
+
+## Scenario 5
+
+Deploy the final scenario.
+
+```sh
+kubectl apply -k kustomize/overlays/scenario-5
+namespace/scenario-5 created
+configmap/common created
+service/demo created
+deployment.apps/demo created
+poddisruptionbudget.policy/demo created
+horizontalpodautoscaler.autoscaling/demo created
+
+```
