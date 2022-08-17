@@ -1,4 +1,4 @@
-# kubernetes-troubleshooting-demo
+# Kubernetes Troubleshooting Demo
 
 This repository holds several different troubleshooting scenarios for Kubernetes.
 
