@@ -191,4 +191,39 @@ Events:
   Normal   Pulled     19s (x13 over 2m43s)  kubelet            Container image "k8s-demo:v0" already present on machine
 ```
 
-There's a lot of output that has been minified for this demo. The relevant information has been preserved. The `Events` list shows what the problem is. 
+There's a lot of output that has been minified for this demo. The relevant information has been preserved. The `Events` list shows what the problem is. The second event says, `Warning  Failed     30s (x12 over 2m43s)  kubelet            Error: configmap "commonn" not found`. The error shows that the deployment is looking for a configmap that doesn't exist. The `kubectl get all` command doesn't show ConfigMaps. Let's take a look at them.
+
+```sh
+kubectl get cm
+NAME               DATA   AGE
+common             1      2m13s
+kube-root-ca.crt   1      2m13s
+```
+
+We can see there are two ConfigMaps. The first one is the one we care about, `common`. Looking at the error, the Deployment is looking for a ConfigMap named `commonn`. Looks like there's a typo. Let's update the [overlay](kustomize/overlays/scenario-1/envFrom.yaml) to use the existing ConfigMap and redeploy.
+
+```sh
+kubectl apply -k kustomize/overlays/scenario-1
+namespace/scenario-1 unchanged
+configmap/common unchanged
+service/demo unchanged
+deployment.apps/demo configured
+poddisruptionbudget.policy/demo configured
+horizontalpodautoscaler.autoscaling/demo configured
+
+
+kubectl get pods
+NAME                   READY   STATUS    RESTARTS   AGE
+demo-c79f576bd-4rfm4   1/1     Running   0          47s
+demo-c79f576bd-f6z4b   1/1     Running   0          48s
+demo-c79f576bd-rcbmk   1/1     Running   0          46s
+```
+
+Now the Pods are running since they have the correct ConfigMap. Let's check the app is working inside.
+
+```sh
+kubectl exec -ti deployment/demo -- curl demo:8080
+{"message":"hello K8s toubleshooting demo","year":"2022"}
+```
+
+All is working. Finished wih this scenario.
